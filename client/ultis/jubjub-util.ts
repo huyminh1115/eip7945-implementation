@@ -106,6 +106,26 @@ export interface TransferProofInput extends Record<string, any> {
   counter: string;
 }
 
+export interface TransferFromProofInput extends Record<string, any> {
+  // Private
+  sk: string;
+  r: string;
+  sAmount: string;
+  bRem: string;
+  // Public
+  MAX: string;
+  y: [string, string]; // spender
+  yR: [string, string]; // receiver/to
+  yF: [string, string]; // from
+  CL: [string, string]; // current allowance of spender
+  CR: [string, string]; // current allowance of spender
+  CS: [string, string]; // C_spender
+  D: [string, string]; // D
+  CRe: [string, string]; // C_receive / to
+  CFr: [string, string]; // C_from
+  counter: string;
+}
+
 export async function generateBurnProof(input: BurnProofInput): Promise<{
   proof: Groth16Proof;
   publicSignals: PublicSignals;
@@ -128,6 +148,20 @@ export async function generateTransferProof(
     input,
     "./circom/transfer_js/transfer.wasm",
     "./circom/transfer_1.zkey"
+  );
+  return { proof, publicSignals };
+}
+
+export async function generateTransferFromProof(
+  input: TransferFromProofInput
+): Promise<{
+  proof: Groth16Proof;
+  publicSignals: PublicSignals;
+}> {
+  const { proof, publicSignals } = await groth16.fullProve(
+    input,
+    "./circom/transferFrom_js/transferFrom.wasm",
+    "./circom/transferFrom_1.zkey"
   );
   return { proof, publicSignals };
 }

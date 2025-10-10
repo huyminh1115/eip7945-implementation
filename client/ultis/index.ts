@@ -362,6 +362,24 @@ export function createTransferInput(
   ];
 }
 
+export function createTransferFromInput(
+  fromPubKey: Point,
+  spenderPubKey: Point,
+  toPubKey: Point,
+  amount: bigint,
+  r: bigint
+): [Point, Point, Point, Point] {
+  const senderPk_r = babyjub.mulPointEscalar(fromPubKey, r);
+  const spenderPk_r = babyjub.mulPointEscalar(spenderPubKey, r);
+  const toPk_r = babyjub.mulPointEscalar(toPubKey, r);
+  const g_amount = babyjub.mulPointEscalar(G, amount);
+  return [
+    babyjub.addPoint(senderPk_r, g_amount),
+    babyjub.addPoint(spenderPk_r, g_amount),
+    babyjub.addPoint(toPk_r, g_amount),
+    createD(r),
+  ];
+}
 /**
  * Create point D for transfer operations
  * @param {bigint} r - Random scalar
