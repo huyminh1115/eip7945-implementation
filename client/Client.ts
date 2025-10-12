@@ -642,6 +642,21 @@ class Client {
   async readBalanceWithInput(CL: SolidityPointInput, CR: SolidityPointInput) {
     return readBalanceWithOnchainData([CL, CR], this.privateKey);
   }
+
+  /**
+   * Revoke allowance for a spender
+   * @param PrivacyToken The contract instance
+   * @param spenderAddress The address of the spender to revoke allowance for
+   */
+  async revokeAllowance(
+    PrivacyToken: PrivacyTokenContract,
+    spenderAddress: string
+  ) {
+    return PrivacyToken.write.revokeAllowance(
+      [getAddress(spenderAddress) as `0x${string}`],
+      { account: this.walletAccount }
+    );
+  }
 }
 
 export default Client;

@@ -416,5 +416,149 @@ describe("Test PrivacyToken", function () {
       );
       expect(balanceC).to.equal(expectedAfterTransferBalance);
     });
+
+    it("8) Approve, partial transferFrom, revokeAllowance, and check balances", async function () {
+      const { PrivacyToken, accounts, publicClient, testClient } =
+        await loadFixture(setupAll);
+
+      // Test input: 3 ETH mint, 2 token approve, 1 token transfer, then revoke
+      const mintAmount = "3";
+      const approveAmount = 2 * 10 ** DECIMALS; // 2 tokens
+      const transferAmount = 10 ** DECIMALS; // 1 token
+      const expectedInitialBalance = Number(mintAmount) * 10 ** DECIMALS;
+      const expectedAfterApproveBalance =
+        expectedInitialBalance - approveAmount;
+      const expectedAfterRevokeBalance =
+        expectedAfterApproveBalance + (approveAmount - transferAmount); // Owner gets back remaining allowance
+
+      const alice = new Client(accounts[1].account, MAX);
+      const bob = new Client(accounts[2].account, MAX);
+      const charlie = new Client(accounts[3].account, MAX);
+
+      // Register accounts A, B, C
+      await alice.registerAccount(PrivacyToken);
+      await bob.registerAccount(PrivacyToken);
+      await charlie.registerAccount(PrivacyToken);
+
+      // Fund A with 3 ETH and rollover
+      await alice.mint(PrivacyToken, mintAmount);
+      await increaseToNextEpoch(publicClient, testClient);
+
+      // Check initial balance
+      const initialBalance = await alice.getCurrentBalance(
+        PrivacyToken,
+        publicClient
+      );
+      expect(initialBalance).to.equal(expectedInitialBalance);
+
+      // Approve 2 units from A to B
+      const approveUnits = String(approveAmount);
+      await alice.confidentialApprove(
+        PrivacyToken,
+        publicClient,
+        approveUnits,
+        accounts[2].account.address
+      );
+
+      // Verify A's balance decreased by approved amount
+      const afterApproveBalance = await alice.getCurrentBalance(
+        PrivacyToken,
+        publicClient
+      );
+      expect(afterApproveBalance).to.equal(expectedAfterApproveBalance);
+
+      // Verify allowance exists and equals approved amount
+      const { owner: ownerBefore, spender: spenderBefore } =
+        await alice.readSpenderAllowance(
+          PrivacyToken,
+          accounts[2].account.address
+        );
+      const ownerBeforeAmt = await alice.readBalanceWithInput(
+        ownerBefore.CL,
+        ownerBefore.CR
+      );
+      const spenderBeforeAmt = await bob.readBalanceWithInput(
+        spenderBefore.CL,
+        spenderBefore.CR
+      );
+      // The allowance should equal the full approved amount
+      expect(ownerBeforeAmt).to.equal(approveAmount);
+      expect(spenderBeforeAmt).to.equal(approveAmount);
+
+      // B transferFrom A to C for 1 unit (partial use of allowance)
+      const transferUnits = String(transferAmount);
+      await bob.confidentialTransferFrom(
+        PrivacyToken,
+        accounts[1].account.address, // from A
+        accounts[3].account.address, // to C
+        transferUnits
+      );
+
+      // Verify allowance decreased by transferred amount
+      const { owner: ownerAfter, spender: spenderAfter } =
+        await alice.readSpenderAllowance(
+          PrivacyToken,
+          accounts[2].account.address
+        );
+      const ownerAfterAmt = await alice.readBalanceWithInput(
+        ownerAfter.CL,
+        ownerAfter.CR
+      );
+      const spenderAfterAmt = await bob.readBalanceWithInput(
+        spenderAfter.CL,
+        spenderAfter.CR
+      );
+      // After transferFrom, the remaining allowance should be approveAmount - transferAmount
+      const expectedRemainingAllowance = approveAmount - transferAmount;
+      expect(ownerAfterAmt).to.equal(expectedRemainingAllowance);
+      expect(spenderAfterAmt).to.equal(expectedRemainingAllowance);
+
+      // A revokes remaining allowance
+      await alice.revokeAllowance(PrivacyToken, accounts[2].account.address);
+
+      // Verify A's balance increased by remaining allowance amount
+      const afterRevokeBalance = await alice.getCurrentBalance(
+        PrivacyToken,
+        publicClient
+      );
+      expect(afterRevokeBalance).to.equal(expectedAfterRevokeBalance);
+
+      // Verify allowance is now zero/empty
+      const allowanceBytes = await PrivacyToken.read.confidentialAllowance([
+        accounts[1].account.address as `0x${string}`,
+        accounts[2].account.address as `0x${string}`,
+      ]);
+      // After revoke, allowance should be empty or contain only zeros
+      expect(allowanceBytes).to.not.be.undefined;
+      // Check if it's empty or contains only zeros
+      if (allowanceBytes !== "0x") {
+        // If not empty, it should contain encoded zeros
+        const { AbiCoder } = await import("ethers");
+        const abiCoder = new AbiCoder();
+        const decoded = abiCoder.decode(
+          [
+            "uint256",
+            "uint256",
+            "uint256",
+            "uint256",
+            "uint256",
+            "uint256",
+            "uint256",
+            "uint256",
+          ],
+          allowanceBytes as `0x${string}`
+        ) as bigint[];
+        // All values should be 0
+        expect(decoded.every((val) => val === 0n)).to.be.true;
+      }
+
+      // After next epoch, C should have received the transferred amount
+      await increaseToNextEpoch(publicClient, testClient);
+      const balanceC = await charlie.getCurrentBalance(
+        PrivacyToken,
+        publicClient
+      );
+      expect(balanceC).to.equal(transferAmount);
+    });
   });
 });

@@ -26,19 +26,17 @@ contract PrivacyToken is IERC7945 {
     mapping(address => uint256) public lastRollOver;
     mapping(address => uint256) public counter;
 
-    // EIP-7945: Address to public key mapping
+    // Address to public key mapping
     // Maps from address to BabyJub.Point public key
     mapping(address => BabyJub.Point) public addressToPublicKey;
     mapping(address => bool) public isRegistered;
 
-    // EIP-7945: Token metadata
+    // Token metadata
     string public tokenName;
     string public tokenSymbol;
 
     uint256 public epochLength;
     uint256 public _totalSupply;
-
-    // EIP-7945: Events are defined in the interface
 
     constructor(
         string memory _name,
