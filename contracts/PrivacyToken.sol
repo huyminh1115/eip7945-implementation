@@ -21,6 +21,8 @@ contract PrivacyToken is IERC7945 {
     // 0: CL
     // 1: CR
     mapping(address => BabyJub.Point[2]) public acc; // main account mapping
+    mapping(address => BabyJub.Point[2]) public allowedAmount; // allowed amount
+
     mapping(address => BabyJub.Point[2]) public pending; // storage for pending transfers
     mapping(address => mapping(address => Allowance)) public allowance;
     mapping(address => uint256) public lastRollOver;
@@ -63,6 +65,9 @@ contract PrivacyToken is IERC7945 {
 
         acc[msg.sender][0] = publicKey;
         acc[msg.sender][1] = BabyJub.base();
+
+        allowedAmount[msg.sender][0] = publicKey;
+        allowedAmount[msg.sender][1] = BabyJub.base();
 
         pending[msg.sender][0] = BabyJub.id();
         pending[msg.sender][1] = BabyJub.id();
@@ -118,6 +123,12 @@ contract PrivacyToken is IERC7945 {
 
             lastRollOver[account] = e;
         }
+    }
+
+    function readAllowedAmount(
+        address account
+    ) public view returns (BabyJub.Point[2] memory) {
+        return allowedAmount[account];
     }
 
     function simulateAccounts(
@@ -435,6 +446,13 @@ contract PrivacyToken is IERC7945 {
         pending[_to][0] = BabyJub.add(pending[_to][0], C_to);
         pending[_to][1] = BabyJub.add(pending[_to][1], D);
 
+        // decrease in total allowed amount
+        allowedAmount[_from][0] = BabyJub.add(
+            allowedAmount[_from][0],
+            C_from.neg()
+        );
+        allowedAmount[_from][1] = BabyJub.add(allowedAmount[_from][1], D.neg());
+
         counter[msg.sender]++;
 
         emit ConfidentialTransfer(
@@ -459,6 +477,7 @@ contract PrivacyToken is IERC7945 {
         bytes calldata _proof
     ) public override returns (bool success) {
         // Check if both addresses have registered public keys
+        // A approve B
         require(registered(msg.sender), "Sender public key not registered");
         require(registered(_spender), "Spender public key not registered");
 
@@ -533,6 +552,16 @@ contract PrivacyToken is IERC7945 {
             BabyJub.add(currentAllowance.CR_spender, D)
         );
 
+        // increase total allowed amount
+        allowedAmount[msg.sender][0] = BabyJub.add(
+            allowedAmount[msg.sender][0],
+            C_owner
+        );
+        allowedAmount[msg.sender][1] = BabyJub.add(
+            allowedAmount[msg.sender][1],
+            D
+        );
+
         counter[msg.sender]++;
 
         emit ConfidentialApproval(
@@ -589,6 +618,16 @@ contract PrivacyToken is IERC7945 {
         acc[msg.sender][1] = BabyJub.add(
             acc[msg.sender][1],
             currentAllowance.CR_owner
+        );
+
+        // decrease total allowed amount
+        allowedAmount[msg.sender][0] = BabyJub.add(
+            allowedAmount[msg.sender][0],
+            currentAllowance.CL_owner.neg()
+        );
+        allowedAmount[msg.sender][1] = BabyJub.add(
+            allowedAmount[msg.sender][1],
+            currentAllowance.CR_owner.neg()
         );
 
         // delete current allowance

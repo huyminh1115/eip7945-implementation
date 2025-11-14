@@ -320,7 +320,6 @@ describe("Test PrivacyToken", function () {
         PrivacyToken,
         accounts[2].account.address
       );
-
       const ownerBalance = await alice.readBalanceWithInput(owner.CL, owner.CR);
       expect(ownerBalance).to.equal(expectedFinalBalance);
 
@@ -329,6 +328,9 @@ describe("Test PrivacyToken", function () {
         spender.CR
       );
       expect(spenderBalance).to.equal(expectedFinalBalance);
+
+      const allowedAmount = await alice.getCurrentAllowedAmount(PrivacyToken);
+      expect(allowedAmount).to.equal(expectedFinalBalance);
     });
 
     it("7) Approve then transferFrom: B moves tokens from A to C", async function () {
@@ -408,6 +410,9 @@ describe("Test PrivacyToken", function () {
       expect(ownerAfterAmt).to.equal(expectedFinalAllowance);
       expect(spenderAfterAmt).to.equal(expectedFinalAllowance);
 
+      const allowedAmount = await alice.getCurrentAllowedAmount(PrivacyToken);
+      expect(allowedAmount).to.equal(expectedFinalAllowance);
+
       // After next epoch, C receives amount
       await increaseToNextEpoch(publicClient, testClient);
       const balanceC = await charlie.getCurrentBalance(
@@ -481,6 +486,10 @@ describe("Test PrivacyToken", function () {
         spenderBefore.CL,
         spenderBefore.CR
       );
+      const allowedAmountBefore = await alice.getCurrentAllowedAmount(
+        PrivacyToken
+      );
+      expect(allowedAmountBefore).to.equal(approveAmount);
       // The allowance should equal the full approved amount
       expect(ownerBeforeAmt).to.equal(approveAmount);
       expect(spenderBeforeAmt).to.equal(approveAmount);
@@ -508,8 +517,12 @@ describe("Test PrivacyToken", function () {
         spenderAfter.CL,
         spenderAfter.CR
       );
+      const allowedAmountAfter = await alice.getCurrentAllowedAmount(
+        PrivacyToken
+      );
       // After transferFrom, the remaining allowance should be approveAmount - transferAmount
       const expectedRemainingAllowance = approveAmount - transferAmount;
+      expect(allowedAmountAfter).to.equal(expectedRemainingAllowance);
       expect(ownerAfterAmt).to.equal(expectedRemainingAllowance);
       expect(spenderAfterAmt).to.equal(expectedRemainingAllowance);
 
@@ -551,6 +564,11 @@ describe("Test PrivacyToken", function () {
         // All values should be 0
         expect(decoded.every((val) => val === 0n)).to.be.true;
       }
+
+      const allowedAmountAfterRevoke = await alice.getCurrentAllowedAmount(
+        PrivacyToken
+      );
+      expect(allowedAmountAfterRevoke).to.equal(0);
 
       // After next epoch, C should have received the transferred amount
       await increaseToNextEpoch(publicClient, testClient);

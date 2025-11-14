@@ -525,6 +525,16 @@ class Client {
     return readBalanceWithOnchainData(accountData, this.privateKey);
   }
 
+  async getCurrentAllowedAmount(
+    PrivacyToken: PrivacyTokenContract
+  ): Promise<number | undefined> {
+    const accountData = await PrivacyToken.read.readAllowedAmount([
+      this.walletAccount.address as `0x${string}`,
+    ]);
+
+    return readBalanceWithOnchainData(accountData, this.privateKey);
+  }
+
   /**
    * Get confidential balance using EIP-7945 interface
    * @param PrivacyToken The contract instance
