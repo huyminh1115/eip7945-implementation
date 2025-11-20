@@ -15,3 +15,16 @@ node_modules
 
 # Hardhat Ignition default folder for deployments against a local node
 ignition/deployments/chain-31337
+
+# Circom
+circom/*_js/
+circom/**/*.r1cs
+circom/**/*.sym
+circom/**/*.ptau
+circom/**/*.zkey
+circom/**/*.wtns
+circom/*.json
+circom/*.sol
+circom/circom/
+circom/circom-ecdsa/
+circom/hash-circuits/
