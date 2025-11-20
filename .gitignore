@@ -25,6 +25,5 @@ circom/**/*.zkey
 circom/**/*.wtns
 circom/*.json
 circom/*.sol
-circom/circom/
 circom/circom-ecdsa/
 circom/hash-circuits/
