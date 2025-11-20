@@ -38,7 +38,7 @@ contract PrivacyToken is IERC7945 {
     string public tokenSymbol;
 
     uint256 public epochLength;
-    uint256 public _totalSupply;
+    uint256 public totalSupply;
 
     constructor(
         string memory _name,
@@ -92,8 +92,8 @@ contract PrivacyToken is IERC7945 {
 
         uint256 amount = msg.value;
         uint256 mintedAmount = (amount * 10 ** DECIMALS) / 10 ** 18;
-        _totalSupply += mintedAmount;
-        require(_totalSupply <= MAX, "Total supply exceeds maximum");
+        totalSupply += mintedAmount;
+        require(totalSupply <= MAX, "Total supply exceeds maximum");
 
         _rollOver(msg.sender);
 
@@ -199,7 +199,7 @@ contract PrivacyToken is IERC7945 {
 
         counter[msg.sender]++;
 
-        _totalSupply -= bTransfer;
+        totalSupply -= bTransfer;
     }
 
     // ============ EIP-7945 Implementation ============
@@ -226,10 +226,6 @@ contract PrivacyToken is IERC7945 {
      */
     function decimals() public view override returns (uint8) {
         return DECIMALS;
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
     }
 
     /**
@@ -687,6 +683,6 @@ contract PrivacyToken is IERC7945 {
         returns (bytes memory)
     {
         // Encode total supply as bytes
-        return abi.encode(_totalSupply);
+        return abi.encode(totalSupply);
     }
 }
