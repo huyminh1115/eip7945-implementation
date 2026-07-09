@@ -37,7 +37,7 @@ describe("Test PrivacyToken", function () {
     const accounts = await hre.viem.getWalletClients();
 
     // Deploy PrivacyToken contract with name and symbol
-    const PrivacyToken = await hre.viem.deployContract("PrivacyToken", [
+    const PrivacyToken = await hre.viem.deployContract("ZKToken", [
       "PrivacyToken", // name
       "PRIV", // symbol
       DECIMALS, // decimals

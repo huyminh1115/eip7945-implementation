@@ -9,14 +9,13 @@ library BabyJub {
     uint256 internal constant P =
         0x30644E72E131A029B85045B68181585D2833E84879B9709143E1F593F0000001;
 
-    uint256 internal constant SUBGROUP_ORDER = 0x60C89CE5C263405370A08B6D0302B0BAB3EEDB83920EE0A677297DC392126F1;
+    uint256 internal constant SUBGROUP_ORDER =
+        0x60C89CE5C263405370A08B6D0302B0BAB3EEDB83920EE0A677297DC392126F1;
 
     // BabyJub parameters
     uint256 internal constant A = 168700;
     uint256 internal constant D = 168696;
 
-    // Neutral element (identity) in affine
-    // For twisted Edwards: (0, 1) is the identity.
     struct Point {
         uint256 x;
         uint256 y;
@@ -46,11 +45,14 @@ library BabyJub {
         return x % P;
     }
 
-    function expF(uint256 base, uint256 exponent) internal view returns (uint256 output) {
+    function expF(
+        uint256 base,
+        uint256 exponent
+    ) internal view returns (uint256 output) {
         // ModExp precompile (0x05)
         assembly {
             let m := mload(0x40)
-            mstore(m, 0x20)            // len(base)
+            mstore(m, 0x20) // len(base)
             mstore(add(m, 0x20), 0x20) // len(exp)
             mstore(add(m, 0x40), 0x20) // len(mod)
             mstore(add(m, 0x60), base)
@@ -97,10 +99,11 @@ library BabyJub {
 
     function base() internal pure returns (Point memory) {
         // Standard BabyJub generator (prime-order subgroup)
-        return Point(
-            5299619240641551281634865583518297030282874472190772894086521144482721001553,
-            16950150798460657717958625567821834550301663161624707787222815936182638968203
-        );
+        return
+            Point(
+                5299619240641551281634865583518297030282874472190772894086521144482721001553,
+                16950150798460657717958625567821834550301663161624707787222815936182638968203
+            );
     }
 
     function neg(Point memory p) internal pure returns (Point memory) {
@@ -113,7 +116,10 @@ library BabyJub {
     //   t = d*x1*x2*y1*y2
     //   x3 = (x1*y2 + y1*x2) / (1 + t)
     //   y3 = (y1*y2 - a*x1*x2) / (1 - t)
-    function add(Point memory p, Point memory q) internal view returns (Point memory r) {
+    function add(
+        Point memory p,
+        Point memory q
+    ) internal view returns (Point memory r) {
         // Special cases with identity
         if (p.x == 0 && p.y == 1) return q;
         if (q.x == 0 && q.y == 1) return p;
@@ -143,7 +149,10 @@ library BabyJub {
         return add(p, p);
     }
 
-    function mul(Point memory p, uint256 s) internal view returns (Point memory r) {
+    function mul(
+        Point memory p,
+        uint256 s
+    ) internal view returns (Point memory r) {
         // Double-and-add, starting from identity
         r = id();
         Point memory acc = p;
@@ -155,5 +164,4 @@ library BabyJub {
             s >>= 1;
         }
     }
-
 }

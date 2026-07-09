@@ -5,7 +5,7 @@ import "./BabyJub.sol";
 import "./Verifier/Verifier.sol";
 import "./interfaces/IERC7945.sol";
 
-contract PrivacyToken is IERC7945 {
+contract ZKToken is IERC7945 {
     using BabyJub for BabyJub.Point;
     struct Allowance {
         BabyJub.Point CL_owner;
@@ -18,12 +18,12 @@ contract PrivacyToken is IERC7945 {
     uint256 public constant MAX = 4294967295; // 2^32 - 1
     Verifier public verifier;
 
-    // 0: CL
-    // 1: CR
-    mapping(address => BabyJub.Point[2]) public acc; // main account mapping
+    mapping(address => BabyJub.Point[2]) public acc; // main account mapping, 0: CL, 1: CR
+    mapping(address => BabyJub.Point[2]) public pending; // storage for pending transfers
+
+    
     mapping(address => BabyJub.Point[2]) public allowedAmount; // allowed amount
 
-    mapping(address => BabyJub.Point[2]) public pending; // storage for pending transfers
     mapping(address => mapping(address => Allowance)) public allowance;
     mapping(address => uint256) public lastRollOver;
     mapping(address => uint256) public counter;
@@ -331,6 +331,78 @@ contract PrivacyToken is IERC7945 {
         emit ConfidentialTransfer(
             address(0),
             msg.sender,
+            _to,
+            _confidentialTransferValue
+        );
+        return true;
+    }
+
+    function confidentialTransferWithSender(
+        address _sender,
+        address _to,
+        bytes calldata _confidentialTransferValue,
+        bytes calldata _proof
+    ) public returns (bool success) {
+        // Check if both addresses have registered public keys
+        require(registered(_sender), "Sender public key not registered");
+        require(registered(_to), "Receiver public key not registered");
+
+        // Get the public keys for sender and receiver
+        BabyJub.Point memory senderPubKey = addressToPublicKey[_sender];
+        BabyJub.Point memory receiverPubKey = addressToPublicKey[_to];
+
+        // roll over sender
+        _rollOver(_sender);
+        // roll over receiver
+        _rollOver(_to);
+
+        // decode proof
+        uint256[8] memory proof = abi.decode(_proof, (uint256[8]));
+
+        // decode C_send, C_receive, D
+        BabyJub.Point[3] memory points = abi.decode(
+            _confidentialTransferValue,
+            (BabyJub.Point[3])
+        );
+        BabyJub.Point memory C_send = points[0];
+        BabyJub.Point memory C_receive = points[1];
+        BabyJub.Point memory D = points[2];
+
+        uint256[16] memory _pubSignals = [
+            senderPubKey.x,
+            senderPubKey.y,
+            receiverPubKey.x,
+            receiverPubKey.y,
+            acc[msg.sender][0].x, // updated balance after roll over
+            acc[msg.sender][0].y, // updated balance after roll over
+            acc[msg.sender][1].x, // updated balance after roll over
+            acc[msg.sender][1].y, // updated balance after roll over
+            C_send.x,
+            C_send.y,
+            D.x,
+            D.y,
+            C_receive.x,
+            C_receive.y,
+            counter[_sender],
+            MAX
+        ];
+
+        require(
+            verifier.verifyTransferProof(proof, _pubSignals),
+            "Transfer proof verification failed!"
+        );
+
+        acc[_sender][0] = BabyJub.add(acc[_sender][0], C_send.neg());
+        acc[_sender][1] = BabyJub.add(acc[_sender][1], D.neg());
+
+        pending[_to][0] = BabyJub.add(pending[_to][0], C_receive);
+        pending[_to][1] = BabyJub.add(pending[_to][1], D);
+
+        counter[_sender]++;
+
+        emit ConfidentialTransfer(
+            address(0),
+            _sender,
             _to,
             _confidentialTransferValue
         );
