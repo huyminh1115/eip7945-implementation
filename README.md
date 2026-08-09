@@ -33,7 +33,74 @@ npx hardhat test
 
 - Node.js 18+
 - npm (or pnpm/yarn)
-- For circuit work: `circom` and `snarkjs` (see `circom/README`)
+- For circuit work: `circom` and `snarkjs` (see [`circom/README`](circom/README))
+
+### Reproduce the standalone-paper benchmarks (Tables 4 and 5)
+
+Use this procedure for the validated **local** Zether measurements. It pins the toolchain, records every observation outside the repository, and leaves the compiler settings in [`hardhat.config.ts`](hardhat.config.ts) unchanged (solc 0.8.28, optimizer 200 runs, `viaIR: true`). Do not override compiler settings on the command line.
+
+1. From this directory, pin Node.js and install the lockfile dependencies:
+
+   ```bash
+   export NVM_DIR="$HOME/.nvm"
+   . "$NVM_DIR/nvm.sh"
+   nvm install 22.16.0
+   nvm use 22.16.0
+   node --version # v22.16.0
+   npm ci
+   npx hardhat compile
+   ```
+
+2. Create a new dated, local-only result directory. Do **not** write to the protected attested directory used for the published Zama campaign, `~/.cache/confidential-vault-benchmarks/attested-node-v22.16.0-solc-0.8.28-runs-200-viair`.
+
+   ```bash
+   RESULTS_ROOT="$HOME/benchmark-results/$(date +%F)-table4-table5"
+   mkdir -p "$RESULTS_ROOT"
+   ```
+
+3. Before either campaign, verify the generated circuit artifacts. The Table 4 Zether gas runner's `updateRate` fixture requires `circom/updateRate_js/updateRate.wasm` and `circom/updateRate.zkey`; Table 5 additionally requires the corresponding `transfer` and `burn` artifacts. Generated `.wasm` and `.zkey` artifacts are unversioned and ignored, so a clean clone must generate any that are missing.
+
+   ```bash
+   for circuit in transfer burn updateRate; do
+     test -f "circom/${circuit}_js/${circuit}.wasm" && test -f "circom/${circuit}.zkey" || { echo "Missing artifact for ${circuit}" >&2; exit 1; }
+   done
+   ```
+
+   If the check reports a missing artifact, regenerate it by following [`circom/README`](circom/README) and the target descriptions in [`circom/Makefile`](circom/Makefile).
+
+4. Run the proof-validating Table 4 gas campaign. The script performs exactly 30 trials per operation, reverts to the same operation-ready Hardhat snapshot before each measured transaction, and records receipt `gasUsed`, submitted-transaction calldata bytes, artifact hashes, toolchain metadata, and all raw observations in `$RESULTS_ROOT/zether-proof-validating-gas.json`. Deposit and withdrawal use the real `ZKToken` asset and a Groth16 transfer proof generated for the exact sender account state; the asset verifier checks that proof in every measured call. The same harness also measures an OpenZeppelin Contracts ERC-4626 v5.4.0 reference vault (approval and setup are excluded from the measured operation).
+
+   ```bash
+   BENCHMARK_TRIALS=30 BENCHMARK_RESULTS_DIR="$RESULTS_ROOT" npx hardhat run scripts/benchmark-gas.mjs
+   ```
+
+5. Run the Table 5 circuit timing campaign. It writes the 30 per-circuit measurements and summary statistics to `$RESULTS_ROOT/proof-timings.json`.
+
+   ```bash
+   BENCHMARK_RESULTS_DIR="$RESULTS_ROOT" node scripts/benchmark-proofs.mjs
+   ```
+
+   Proof time is `groth16.prove` only, with the witness generated before timing. Verification time is `groth16.verify` only, after the verification key, proof, and public signals are in memory. There are no warm-up trials. Timing results are therefore host-dependent; record the machine, OS, and Node version with every campaign.
+
+#### Reference values, not cross-host guarantees
+
+The proof-validating campaign saved in [`results/proof-validating-2026-07-30/zether-proof-validating-gas.json`](results/proof-validating-2026-07-30/zether-proof-validating-gas.json) ran on Apple M1 Pro / macOS arm64 / Node 23.11.0. Its 30-trial receipt-gas means (all sample standard deviations zero) were:
+
+| Operation | OpenZeppelin ERC-4626 | Zether Vault | Submitted calldata |
+| --- | ---: | ---: | ---: |
+| deposit | 109,815 | 842,897 | 68 / 580 bytes |
+| withdraw | 44,736 | 712,360 | 100 / 580 bytes |
+| rate update | n/a | 335,573 | n/a / 356 bytes |
+
+The previously reported Table 5 values were:
+
+| Circuit    | Prove (ms, mean ± sample SD) | Verify (ms, mean ± sample SD) |
+| ---------- | ---------------------------: | ----------------------------: |
+| transfer   |               870.98 ± 48.35 |                   8.10 ± 0.28 |
+| burn       |               420.32 ± 10.91 |                   9.31 ± 0.19 |
+| updateRate |                534.74 ± 9.67 |                   9.51 ± 0.21 |
+
+These figures are references, not expected identical results on another host. The Zether deposit and withdrawal fixtures use the real `ZKToken` asset and non-empty Groth16 transfer proofs, so the reported path includes on-chain asset-side proof verification. The ERC-4626 reference is measured under the same local harness but is not privacy-equivalent; approval and setup remain excluded, and the paper makes no percentage-overhead claim from it. Node 23.11.0 is outside Hardhat's supported Node range, so reproduce on a supported pinned Node version before treating the measurements as release-quality cross-host baselines.
 
 ### How it works (high-level)
 
@@ -61,7 +128,7 @@ await client.confidentialTransfer(
   privacyToken,
   publicClient,
   "1000",
-  receiverAddress
+  receiverAddress,
 );
 
 // Approve allowance
@@ -69,7 +136,7 @@ await client.confidentialApprove(
   privacyToken,
   publicClient,
   "500",
-  spenderAddress
+  spenderAddress,
 );
 
 // Transfer from (spender)
@@ -77,20 +144,20 @@ await client.confidentialTransferFrom(
   privacyToken,
   fromAddress,
   toAddress,
-  "100"
+  "100",
 );
 
 // Read balances and allowances
 const balance = await client.getCurrentBalance(privacyToken, publicClient);
 const allowanceData = await client.readSpenderAllowance(
   privacyToken,
-  spenderAddress
+  spenderAddress,
 );
 ```
 
 ### Circom workflow
 
-Pre-built artifacts for transfer/burn/transferFrom are included under `circom/`. To rebuild or modify circuits:
+Generated circuit `.wasm` and `.zkey` artifacts under `circom/` are unversioned and ignored; generate them when they are missing. To rebuild or modify circuits:
 
 ```bash
 # inside ./circom

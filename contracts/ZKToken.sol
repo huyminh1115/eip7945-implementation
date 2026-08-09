@@ -373,10 +373,10 @@ contract ZKToken is IERC7945 {
             senderPubKey.y,
             receiverPubKey.x,
             receiverPubKey.y,
-            acc[msg.sender][0].x, // updated balance after roll over
-            acc[msg.sender][0].y, // updated balance after roll over
-            acc[msg.sender][1].x, // updated balance after roll over
-            acc[msg.sender][1].y, // updated balance after roll over
+            acc[_sender][0].x, // updated balance after roll over
+            acc[_sender][0].y, // updated balance after roll over
+            acc[_sender][1].x, // updated balance after roll over
+            acc[_sender][1].y, // updated balance after roll over
             C_send.x,
             C_send.y,
             D.x,

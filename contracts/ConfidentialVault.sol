@@ -265,8 +265,15 @@ contract ConfidentialVault is ZKToken {
             newRatio
         ];
 
+        uint256[8] memory decodedProof = abi.decode(proof, (uint256[8]));
+        uint256[2] memory proofA = [decodedProof[0], decodedProof[1]];
+        uint256[2][2] memory proofB = [
+            [decodedProof[2], decodedProof[3]],
+            [decodedProof[4], decodedProof[5]]
+        ];
+        uint256[2] memory proofC = [decodedProof[6], decodedProof[7]];
         require(
-            updateRateVerifier.verifyTransferProof(proof, pubSignals),
+            updateRateVerifier.verifyProof(proofA, proofB, proofC, pubSignals),
             "Update rate proof failed"
         );
 
