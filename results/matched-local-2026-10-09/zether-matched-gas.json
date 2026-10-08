@@ -1,0 +1,795 @@
+{
+  "schemaVersion": 3,
+  "campaign": "local-matched-2026-10-09",
+  "provenance": {
+    "sourceCommit": "cdd7f6da350f1ac94f805e6f6670fdf59016ef87",
+    "sourceDirty": false,
+    "files": {
+      "contracts/BabyJub.sol": "02beaa534be047570c2205151ef3b5972ced973218e36e4e742fd4fb3ab2a77f",
+      "contracts/ConfidentialVault.sol": "e59720091b5a9fffc8cb9ada9823b09dd28b7e52bc490ad681b5473bb4499c86",
+      "contracts/Verifier/UpdateRateVerifier.sol": "1fe8f2e62a4a1b61806b2350b7463f471bd42677430a83335be16deea38ab6c4",
+      "contracts/Verifier/Verifier.sol": "aee12e1478fcc2ea0e856d327d85af3e8f5a2d749380557cadd15424ecf93867",
+      "contracts/ZKToken.sol": "5b886eeb16c00ab0eac58ae85399dc123499f653c59c7722262c2b0299906bda",
+      "contracts/interfaces/IERC7945.sol": "84378180e19b0899c44eef0adae0eb71ac581801af43266f320cb3189d0ad601",
+      "contracts/mocks/BabyJubTestHelper.sol": "93cbee5b5eaa530cac23a030a8eaa15801ab99035ba5c2ecd05df708c1dd645f",
+      "contracts/mocks/MockPrivacyTokenAsset.sol": "2a209a7735b7cf18814880b448f812bd84c1f38b69610d1af16e84398e29af78",
+      "contracts/mocks/OpenZeppelinERC4626Baseline.sol": "eabd52bfaa727f050377e789ae290522c983ce8099f1993c85f9c622de621481",
+      "package.json": "690756673c3f86d91a468cbd24785099af7ef2163b6aea4bbdd7a8a6f52e5bb8",
+      "package-lock.json": "a071d7e80d5ae5e4ff6a4ba210e528a7c0f691cba8033102abde01557657e2a7",
+      "hardhat.config.ts": "9dbd80512b9adaa4b5fab14fef0f8c0f7e3ecc5ddbdaa0e2960f8734f3f7af9c",
+      "hardhat.paper.config.ts": "c1363d6c93bd26c60df7c16ad86ae21c82ea5d41cefe7ba3450f0e9939335c82",
+      "scripts/paper-provenance.cjs": "5042c0ea9bcb2a460a5c24dea8725dda657a4b520c8b269ae068f52553ee9925",
+      "scripts/benchmark-matched.mjs": "54bbd6a93ab6f8d221bfe9ba40abb629fd8cc6107c0ff613c830e5308e00b9b1"
+    },
+    "builds": [
+      {
+        "file": "19423aea617c9f0fa7c990f0c26ddaf8.json",
+        "sha256": "5286213be3046cb3cd3029873b69f121c479cbab0ed79440ead146c355a09ce9",
+        "solcLongVersion": "0.8.28+commit.7893614a",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "cancun",
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "useLiteralContent": true
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "hardhat": "2.26.3",
+    "edr": "0.11.3",
+    "network": {
+      "chainId": 31337,
+      "hardfork": "prague",
+      "blockGasLimit": 30000000,
+      "initialBaseFeePerGas": 1000000000,
+      "initialDate": "2026-10-09T00:00:00Z",
+      "mining": {
+        "auto": true,
+        "interval": 0,
+        "mempool": {
+          "order": "priority"
+        }
+      }
+    },
+    "compiler": [
+      {
+        "version": "0.8.28",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "viaIR": true,
+          "evmVersion": "cancun",
+          "metadata": {
+            "bytecodeHash": "ipfs",
+            "useLiteralContent": true
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "workloads": {
+    "initialUserAssets": "10000",
+    "depositAssets": "100",
+    "withdrawAssets": "100",
+    "zkAssetDecimals": 4,
+    "zkEncodedDepositRatio": "1",
+    "zkRateAssets": "100",
+    "zkRateShares": "300",
+    "note": "Deposit/withdraw use 100 raw asset units at one share per asset; rate fixtures use 300 shares and 100 assets. Token units, custody and rate encoding remain implementation-specific."
+  },
+  "generatedAt": "2026-10-08T17:27:17.583Z",
+  "methodology": {
+    "trials": 30,
+    "metric": "transaction receipt gasUsed and submitted transaction input bytes",
+    "reset": "Each trial reverts to the operation-ready Hardhat snapshot before the measured transaction.",
+    "standardDeviation": "sample (n - 1)",
+    "compiler": "solc 0.8.28; optimizer enabled with 200 runs; viaIR true",
+    "zetherProofs": "Deposit and withdraw use one real Groth16 transfer proof generated against the exact operation-ready sender account state; every trial submits that proof and the ZKToken verifier validates it.",
+    "openZeppelinBaseline": "OpenZeppelin Contracts ERC4626 v5.4.0, measured by this same Hardhat harness; approvals and operation setup are excluded from the timed transaction."
+  },
+  "artifacts": {
+    "transferWasm": {
+      "path": "circom/transfer_js/transfer.wasm",
+      "sha256": "6aa41b21a234568571726e857796d289870f3000d3828abd7cd036e1d887b04f"
+    },
+    "transferZkey": {
+      "path": "circom/transfer_1.zkey",
+      "sha256": "0e200db0b51a4cb08a92e41f942660dabe0dd67c4facd87e72a3600eee7f7269"
+    },
+    "updateRateWasm": {
+      "path": "circom/updateRate_js/updateRate.wasm",
+      "sha256": "57738522b8a0297083ae03ac8d593f87ca2b6a2e6bcd89c87977861797438a31"
+    },
+    "updateRateZkey": {
+      "path": "circom/updateRate.zkey",
+      "sha256": "47dd44b7b633af0301ab18cce55878b509392c18fcc8c2cd171167a116860d5f"
+    }
+  },
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "node": "v22.16.0",
+    "cpus": [
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 93996260,
+          "nice": 0,
+          "sys": 57129200,
+          "idle": 165162380,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 93787840,
+          "nice": 0,
+          "sys": 55318510,
+          "idle": 167246030,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 50760310,
+          "nice": 0,
+          "sys": 16393840,
+          "idle": 249729580,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 47952370,
+          "nice": 0,
+          "sys": 11865880,
+          "idle": 257478090,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 28773360,
+          "nice": 0,
+          "sys": 6581820,
+          "idle": 282190640,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 22537730,
+          "nice": 0,
+          "sys": 4988250,
+          "idle": 290124720,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 13388280,
+          "nice": 0,
+          "sys": 2424980,
+          "idle": 302003000,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 8395640,
+          "nice": 0,
+          "sys": 1552760,
+          "idle": 307958050,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 4377700,
+          "nice": 0,
+          "sys": 817920,
+          "idle": 312773390,
+          "irq": 0
+        }
+      },
+      {
+        "model": "Apple M1 Pro",
+        "speed": 2400,
+        "times": {
+          "user": 5722230,
+          "nice": 0,
+          "sys": 970670,
+          "idle": 311300510,
+          "irq": 0
+        }
+      }
+    ],
+    "totalMemoryBytes": 34359738368
+  },
+  "operations": {
+    "zether": {
+      "deposit": {
+        "gasUsed": [
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856",
+          "718856"
+        ],
+        "calldataBytes": [
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580
+        ],
+        "transactionInputSha256": [
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd",
+          "429517e347b555561399b108d3e8ebb4042a6dab4f935a3288328245c75758bd"
+        ],
+        "statistics": {
+          "meanGas": 718856,
+          "sampleStddevGas": 0,
+          "meanCalldataBytes": 580,
+          "sampleStddevCalldataBytes": 0
+        }
+      },
+      "withdraw": {
+        "gasUsed": [
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620",
+          "587620"
+        ],
+        "calldataBytes": [
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580,
+          580
+        ],
+        "transactionInputSha256": [
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782",
+          "f9de536146b1fed09f2cee6b80bca970f4c787923f29dc47f0c3dfceee89b782"
+        ],
+        "statistics": {
+          "meanGas": 587620,
+          "sampleStddevGas": 0,
+          "meanCalldataBytes": 580,
+          "sampleStddevCalldataBytes": 0
+        }
+      },
+      "updateRate": {
+        "gasUsed": [
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522",
+          "335522"
+        ],
+        "calldataBytes": [
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356,
+          356
+        ],
+        "transactionInputSha256": [
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a",
+          "b6c49b417b2e2a36d4409037f25275cdb0b52a9f3516438384f2dbcba6540f3a"
+        ],
+        "statistics": {
+          "meanGas": 335522,
+          "sampleStddevGas": 0,
+          "meanCalldataBytes": 356,
+          "sampleStddevCalldataBytes": 0
+        }
+      }
+    },
+    "openZeppelinErc4626": {
+      "deposit": {
+        "gasUsed": [
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782",
+          "109782"
+        ],
+        "calldataBytes": [
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68,
+          68
+        ],
+        "transactionInputSha256": [
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8",
+          "84a74d5a5ff38e0b38644eb41ba2d9573c40751bf929b8eeb9421badf7e438c8"
+        ],
+        "statistics": {
+          "meanGas": 109782,
+          "sampleStddevGas": 0,
+          "meanCalldataBytes": 68,
+          "sampleStddevCalldataBytes": 0
+        }
+      },
+      "withdraw": {
+        "gasUsed": [
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703",
+          "44703"
+        ],
+        "calldataBytes": [
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100,
+          100
+        ],
+        "transactionInputSha256": [
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d",
+          "31b033a5b30f33c7630e749334c19f9516ddc7af50d772e96732376245dc141d"
+        ],
+        "statistics": {
+          "meanGas": 44703,
+          "sampleStddevGas": 0,
+          "meanCalldataBytes": 100,
+          "sampleStddevCalldataBytes": 0
+        }
+      }
+    }
+  }
+}

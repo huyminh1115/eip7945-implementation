@@ -1,5 +1,7 @@
 ## PrivacyToken - EIP-7945 Implementation
 
+For short paper-reproduction commands, see [PAPER_REPRODUCTION.md](PAPER_REPRODUCTION.md) or run `make help`.
+
 This project implements a privacy-preserving token contract based on EIP-7945 (Confidential Transactions Supported Token) using Zether protocol on BabyJub with Circom proofs.
 
 - **EIP-7945 Compliance**: Implements the standard interface for confidential token contracts ([link](https://ethereum-magicians.org/t/eip-7945-confidential-transactions-supported-token/))
