@@ -4,7 +4,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
-import { groth16, zKey } from "snarkjs";
+import { curves, groth16, zKey } from "snarkjs";
 
 const TRIALS = 30;
 const root = path.resolve(import.meta.dirname, "..");
@@ -103,34 +103,40 @@ async function benchmarkCircuit(name, input) {
   };
 }
 
-const results = {
-  schemaVersion: 1,
-  generatedAt: new Date().toISOString(),
-  methodology: {
-    trials: TRIALS,
-    warmups: 0,
-    proveInterval: "groth16.prove only; witnesses were generated before timing",
-    verifyInterval: "groth16.verify only; verification key, proof, and public signals were loaded before timing",
-    standardDeviation: "sample (n - 1)",
-  },
-  host: {
-    platform: process.platform,
-    arch: process.arch,
-    node: process.version,
-    cpus: os.cpus(),
-    totalMemoryBytes: os.totalmem(),
-  },
-  circuits: {
-    transfer: await benchmarkCircuit("transfer", path.join(circomDir, "inputs", "transfer_input.json")),
-    burn: await benchmarkCircuit("burn", path.join(circomDir, "inputs", "burn_input.json")),
-    updateRate: await benchmarkCircuit("updateRate", updateRateInput),
-  },
-};
+// Release the shared proof workers so command-line benchmarks can exit.
+const curve = await curves.getCurveFromName("bn128");
+try {
+  const results = {
+    schemaVersion: 1,
+    generatedAt: new Date().toISOString(),
+    methodology: {
+      trials: TRIALS,
+      warmups: 0,
+      proveInterval: "groth16.prove only; witnesses were generated before timing",
+      verifyInterval: "groth16.verify only; verification key, proof, and public signals were loaded before timing",
+      standardDeviation: "sample (n - 1)",
+    },
+    host: {
+      platform: process.platform,
+      arch: process.arch,
+      node: process.version,
+      cpus: os.cpus(),
+      totalMemoryBytes: os.totalmem(),
+    },
+    circuits: {
+      transfer: await benchmarkCircuit("transfer", path.join(circomDir, "inputs", "transfer_input.json")),
+      burn: await benchmarkCircuit("burn", path.join(circomDir, "inputs", "burn_input.json")),
+      updateRate: await benchmarkCircuit("updateRate", updateRateInput),
+    },
+  };
 
-const outputPath = path.join(outputDir, "proof-timings.json");
-fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
-console.log(`Wrote proof benchmark observations to ${outputPath}`);
-for (const [name, result] of Object.entries(results.circuits)) {
-  const stats = result.statistics;
-  console.log(`${name}: prove ${stats.proveMeanMs.toFixed(2)} ± ${stats.proveSampleStddevMs.toFixed(2)} ms; verify ${stats.verifyMeanMs.toFixed(2)} ± ${stats.verifySampleStddevMs.toFixed(2)} ms`);
+  const outputPath = path.join(outputDir, "proof-timings.json");
+  fs.writeFileSync(outputPath, JSON.stringify(results, null, 2));
+  console.log(`Wrote proof benchmark observations to ${outputPath}`);
+  for (const [name, result] of Object.entries(results.circuits)) {
+    const stats = result.statistics;
+    console.log(`${name}: prove ${stats.proveMeanMs.toFixed(2)} ± ${stats.proveSampleStddevMs.toFixed(2)} ms; verify ${stats.verifyMeanMs.toFixed(2)} ± ${stats.verifySampleStddevMs.toFixed(2)} ms`);
+  }
+} finally {
+  await curve.terminate();
 }
